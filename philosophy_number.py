@@ -20,10 +20,17 @@ def build_parser():
     )
 
     parser.add_argument(
-        '--random',
+        '-r', '--random',
         help='Display this many random pages',
         type=int,
         default=0
+    )
+
+    parser.add_argument(
+        '--examples',
+        help='Display some examples',
+        action='store_true',
+        default=False
     )
 
     return parser
@@ -67,18 +74,13 @@ def get_number(starting_page, print_page=True):
     paragraphs = soup.findAll('p')
     for paragraph in paragraphs:
         prune_parenthesised(paragraph)
-        refs = paragraph.findAll('sup', 'reference')
-        for ref in refs:
-            ref.extract()
-        thumbs = paragraph.findAll('div', 'thumbinner')
-        for thumb in thumbs:
-            thumb.extract()
-        italics = paragraph.findAll('i')
-        for italic in italics:
-            italic.extract()
-        audios = paragraph.findAll('span', 'unicode haudio')
-        for audio in audios:
-            audio.extract()
+        prune_list = (paragraph.findAll('sup', 'reference') +
+            paragraph.findAll('div', 'thumbinner') +
+            paragraph.findAll('i') +
+            paragraph.findAll('span', 'unicode haudio'))
+        for item in prune_list:
+            item.extract()
+
         link = paragraph.find('a')
         if link is not None:
             break
@@ -88,20 +90,21 @@ def get_number(starting_page, print_page=True):
     return 1 + get_number(link['href'])
 
 def main(args):
-    # pages = [
-    #     'Beige',
-    #     '502nd_Military_Intelligence_Battalion',
-    #     'E._P._Thompson',
-    #     'Johann_Georg_Fuchs_von_Dornheim',
-    #     'List_of_animals_with_fraudulent_diplomas',
-    #     'Lil_jon',
-    #     'spanish_cuisine',
-    #     'Norwegian_butter_crisis'
-    # ]
+    if args.examples:
+        pages = [
+            'Beige',
+            '502nd_Military_Intelligence_Battalion',
+            'E._P._Thompson',
+            'Johann_Georg_Fuchs_von_Dornheim',
+            'List_of_animals_with_fraudulent_diplomas',
+            'Lil_jon',
+            'spanish_cuisine',
+            'Norwegian_butter_crisis'
+        ]
 
-    # for page in pages:
-    #     number = get_number('/wiki/' + page)
-    #     print(number)
+        for page in pages:
+            number = get_number('/wiki/' + page)
+            print(number)
 
     for page in args.pages:
         number = get_number('/wiki/' + page)
