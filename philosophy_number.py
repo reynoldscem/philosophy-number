@@ -58,12 +58,14 @@ def get_number(starting_page):
         if link is not None:
             break
     if link is None:
-        raise Exception('Apparently has no number!')
+        return float('inf')
 
     return 1 + get_number(link['href'])
 
 def main():
     pages = [
+        '502nd_Military_Intelligence_Battalion',
+        'E._P._Thompson',
         'Johann_Georg_Fuchs_von_Dornheim',
         'List_of_animals_with_fraudulent_diplomas',
         'Lil_jon',
