@@ -35,6 +35,7 @@ def build_parser():
 
     return parser
 
+
 def prune_parenthesised(paragraph):
     paren_start = paragraph.find(text=re.compile('\('))
     if paren_start is None:
@@ -84,10 +85,12 @@ def get_number(starting_page, print_page=True, seen=None):
     paragraphs = soup.findAll('p')
     for paragraph in paragraphs:
         prune_parenthesised(paragraph)
-        prune_list = (paragraph.findAll('sup', 'reference') +
+        prune_list = (
+            paragraph.findAll('sup', 'reference') +
             paragraph.findAll('div', 'thumbinner') +
             paragraph.findAll('i') +
-            paragraph.findAll('span', 'unicode haudio'))
+            paragraph.findAll('span', 'unicode haudio')
+        )
         for item in prune_list:
             item.extract()
 
@@ -99,7 +102,10 @@ def get_number(starting_page, print_page=True, seen=None):
 
     return 1 + get_number(link['href'], seen=seen)
 
-def main(args):
+
+def main():
+    args = build_parser().parse_args()
+
     if args.examples:
         pages = [
             'Beige',
@@ -132,5 +138,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = build_parser().parse_args()
-    main(args)
+    main()
