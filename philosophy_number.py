@@ -58,9 +58,19 @@ def prune_parenthesised(paragraph):
         item.extract()
 
 
-def get_number(starting_page, print_page=True):
+def get_number(starting_page, print_page=True, seen=None):
+    if seen is None:
+        seen = set()
+
     if print_page:
         print(starting_page)
+
+    # Cycle
+    if starting_page in seen:
+        return float('inf')
+    else:
+        seen.add(starting_page)
+
     url = urljoin(wikipedia_address, starting_page)
 
     if starting_page == '/wiki/Philosophy':
@@ -87,7 +97,7 @@ def get_number(starting_page, print_page=True):
     if link is None:
         return float('inf')
 
-    return 1 + get_number(link['href'])
+    return 1 + get_number(link['href'], seen=seen)
 
 def main(args):
     if args.examples:
