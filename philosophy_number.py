@@ -1,12 +1,17 @@
+from urllib.error import HTTPError
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
+from functools import partial
 from itertools import count
 from urllib import request
 import argparse
+import sys
 import bs4
 import re
 
-wikipedia_address = 'http://en.wikipedia.org/'
+
+WIKIPEDIA_ADDRESS = 'http://en.wikipedia.org/'
+PHILOSOPHY_PAGE = 'Philosophy'
 
 
 def build_parser():
@@ -21,16 +26,23 @@ def build_parser():
 
     parser.add_argument(
         '-r', '--random',
-        help='Display this many random pages',
+        help='Display this many random pages.',
         type=int,
         default=0
     )
 
     parser.add_argument(
         '--examples',
-        help='Display some examples',
+        help='Display some examples.',
         action='store_true',
         default=False
+    )
+
+    parser.add_argument(
+        '--destination-page',
+        help='Page to crawl to.',
+        type=str,
+        default=PHILOSOPHY_PAGE
     )
 
     return parser
@@ -59,7 +71,9 @@ def prune_parenthesised(paragraph):
         item.extract()
 
 
-def get_number(starting_page, print_page=True, seen=None):
+def get_number(
+        starting_page, print_page=True,
+        seen=None, target_page=PHILOSOPHY_PAGE):
     if seen is None:
         seen = set()
 
@@ -72,9 +86,9 @@ def get_number(starting_page, print_page=True, seen=None):
     else:
         seen.add(starting_page)
 
-    url = urljoin(wikipedia_address, starting_page)
+    url = urljoin(WIKIPEDIA_ADDRESS, starting_page)
 
-    if starting_page == '/wiki/Philosophy':
+    if starting_page == target_page:
         return 0
 
     content = request.urlopen(url).read()
@@ -100,11 +114,25 @@ def get_number(starting_page, print_page=True, seen=None):
     if link is None:
         return float('inf')
 
-    return 1 + get_number(link['href'], seen=seen)
+    return 1 + get_number(
+        link['href'], seen=seen,
+        print_page=print_page, target_page=target_page
+    )
 
 
 def main():
     args = build_parser().parse_args()
+
+    print(args.destination_page)
+    url = urljoin(WIKIPEDIA_ADDRESS, '/wiki/' + args.destination_page)
+    try:
+        request.urlopen(url)
+    except HTTPError as e:
+        print('Error accessing page: {}'.format(e))
+        sys.exit(1)
+    get_number_ = partial(
+        get_number, target_page='/wiki/' + args.destination_page
+    )
 
     if args.examples:
         pages = [
@@ -119,11 +147,11 @@ def main():
         ]
 
         for page in pages:
-            number = get_number('/wiki/' + page)
+            number = get_number_('/wiki/' + page)
             print(number)
 
     for page in args.pages:
-        number = get_number('/wiki/' + page)
+        number = get_number_('/wiki/' + page)
         print(number)
 
     for iteration in count(0):
@@ -133,7 +161,7 @@ def main():
         random = request.urlopen(
             'https://en.wikipedia.org/wiki/Special:Random'
         ).url.split('/')[-1]
-        number = get_number('/wiki/' + random)
+        number = get_number_('/wiki/' + random)
         print(number)
 
 
